@@ -18,6 +18,7 @@ export * from './metadataGeneration/tsoa';
 export * from './routeGeneration/templateHelpers';
 export * from './routeGeneration/tsoa-route';
 export * from './utils/assertNever';
+export * from './utils/toXml';
 export * from './swagger/swagger';
 export * from './config';
 export * from './routeGeneration/additionalProps';

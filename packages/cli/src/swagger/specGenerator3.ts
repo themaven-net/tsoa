@@ -166,6 +166,10 @@ export class SpecGenerator3 extends SpecGenerator {
         if (referenceType.example) {
           schema[referenceType.refName].example = referenceType.example;
         }
+
+        if (referenceType.xml) {
+          schema[referenceType.refName].xml = referenceType.xml;
+        }
       } else if (referenceType.dataType === 'refEnum') {
         const enumTypes = this.determineTypesUsedInEnum(referenceType.enums);
 
@@ -545,6 +549,7 @@ export class SpecGenerator3 extends SpecGenerator {
         });
       }
 
+      if (property.xml) swaggerType.xml = property.xml;
       properties[property.name] = swaggerType as Swagger.Schema;
     });
 

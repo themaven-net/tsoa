@@ -312,7 +312,7 @@ export namespace Swagger {
     type?: string;
     namespace?: string;
     prefix?: string;
-    attribute?: string;
+    attribute?: boolean;
     wrapped?: boolean;
   }
 

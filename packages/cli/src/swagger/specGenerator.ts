@@ -59,7 +59,7 @@ export abstract class SpecGenerator {
     }
   }
 
-  protected getSwaggerType(type: Tsoa.Type): Swagger.Schema | Swagger.BaseSchema {
+  protected getSwaggerType(type: Tsoa.Type, xml?: Tsoa.XML): Swagger.Schema | Swagger.BaseSchema {
     if (type.dataType === 'void' || type.dataType === 'undefined') {
       return this.getSwaggerTypeForVoid(type.dataType);
     } else if (type.dataType === 'refEnum' || type.dataType === 'refObject' || type.dataType === 'refAlias') {
@@ -82,27 +82,27 @@ export abstract class SpecGenerator {
     ) {
       return this.getSwaggerTypeForPrimitiveType(type.dataType);
     } else if (type.dataType === 'array') {
-      return this.getSwaggerTypeForArrayType(type);
+      return this.getSwaggerTypeForArrayType(type, xml);
     } else if (type.dataType === 'enum') {
       return this.getSwaggerTypeForEnumType(type);
     } else if (type.dataType === 'union') {
-      return this.getSwaggerTypeForUnionType(type);
+      return this.getSwaggerTypeForUnionType(type, xml);
     } else if (type.dataType === 'intersection') {
-      return this.getSwaggerTypeForIntersectionType(type);
+      return this.getSwaggerTypeForIntersectionType(type, xml);
     } else if (type.dataType === 'nestedObjectLiteral') {
-      return this.getSwaggerTypeForObjectLiteral(type);
+      return this.getSwaggerTypeForObjectLiteral(type, xml);
     } else {
       return assertNever(type);
     }
   }
 
-  protected abstract getSwaggerTypeForUnionType(type: Tsoa.UnionType);
+  protected abstract getSwaggerTypeForUnionType(type: Tsoa.UnionType, xml?: Tsoa.XML);
 
-  protected abstract getSwaggerTypeForIntersectionType(type: Tsoa.IntersectionType);
+  protected abstract getSwaggerTypeForIntersectionType(type: Tsoa.IntersectionType, xml?: Tsoa.XML);
 
   protected abstract buildProperties(properties: Tsoa.Property[]): { [propertyName: string]: Swagger.Schema | Swagger.Schema3 };
 
-  public getSwaggerTypeForObjectLiteral(objectLiteral: Tsoa.NestedObjectLiteralType): Swagger.Schema {
+  public getSwaggerTypeForObjectLiteral(objectLiteral: Tsoa.NestedObjectLiteralType, xml?: Tsoa.XML): Swagger.Schema {
     const properties = this.buildProperties(objectLiteral.properties);
 
     const additionalProperties = objectLiteral.additionalProperties && this.getSwaggerType(objectLiteral.additionalProperties);
@@ -111,12 +111,14 @@ export abstract class SpecGenerator {
 
     // An empty list required: [] is not valid.
     // If all properties are optional, do not specify the required keyword.
-    return {
+    const swaggerType: Swagger.Schema = {
       properties,
       ...(additionalProperties && { additionalProperties }),
       ...(required && required.length && { required }),
       type: 'object',
     };
+    if (xml) swaggerType.xml = xml;
+    return swaggerType;
   }
 
   protected getSwaggerTypeForReferenceType(_referenceType: Tsoa.ReferenceType): Swagger.BaseSchema {
@@ -187,11 +189,13 @@ export abstract class SpecGenerator {
     return map[dataType];
   }
 
-  protected getSwaggerTypeForArrayType(arrayType: Tsoa.ArrayType): Swagger.Schema {
-    return {
+  protected getSwaggerTypeForArrayType(arrayType: Tsoa.ArrayType, xml?: Tsoa.XML): Swagger.Schema {
+    const swaggerType: Swagger.Schema = {
       items: this.getSwaggerType(arrayType.elementType),
       type: 'array',
     };
+    if (xml) swaggerType.xml = xml;
+    return swaggerType;
   }
 
   protected determineTypesUsedInEnum(anEnum: Array<string | number | boolean | null>) {
