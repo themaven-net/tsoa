@@ -78,7 +78,6 @@ export function RegisterRoutes(app: express.Router) {
         ...(fetchMiddlewares<RequestHandler>({{../name}}.prototype.{{name}})),
 
         {{#if ../../iocModule}}async {{/if}}function {{../name}}_{{name}}(request: any, response: any, next: any) {
-            {{log this}}
             const args = {
                 {{#each parameters}}
                 {{@key}}: {{{json this 4}}},

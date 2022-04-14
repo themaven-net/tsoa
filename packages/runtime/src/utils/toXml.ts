@@ -29,7 +29,7 @@ export function toXml(schema: Tsoa.Type, value: any, name = 'response'): jsontox
         for (const property of schema.properties) {
           const propertyValue = value[property.name];
           if (propertyValue !== undefined) {
-            console.log('toXml property', property.name);
+            //console.log('toXml property', property.name);
             rec(property.type, propertyValue, wrapper, property.xml?.name ?? property.name, property.xml);
           }
         }

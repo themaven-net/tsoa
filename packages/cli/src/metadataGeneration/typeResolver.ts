@@ -196,8 +196,6 @@ export class TypeResolver {
         .filter(property => isIgnored(property) === false)
         // Transform to property
         .map(property => {
-          const xmlJSDocTags = property.getJsDocTags().filter(tag => tag.name.startsWith('xml'));
-          console.log('isMappedTypeNode xmlJSDocTags', xmlJSDocTags);
           const propertyType = typeChecker.getTypeOfSymbolAtLocation(property, this.typeNode);
           const declaration = getDeclaration(property) as ts.PropertySignature | ts.PropertyDeclaration | ts.ParameterDeclaration | undefined;
 
@@ -714,7 +712,7 @@ export class TypeResolver {
   }
 
   private getModelReference(modelType: ts.InterfaceDeclaration | ts.ClassDeclaration, name: string) {
-    console.log('getModelReference', name);
+    //console.log('getModelReference', name);
     const example = this.getNodeExample(modelType);
     const description = this.getNodeDescription(modelType);
     const deprecated = isExistJSDocTag(modelType, tag => tag.tagName.text === 'deprecated') || isDecorator(modelType, identifier => identifier.text === 'Deprecated');
@@ -972,7 +970,7 @@ export class TypeResolver {
 
     const xml = getXMLSpecFromDocTags(propertySignature);
     //console.log('propertyFromSignature xmlJSDocTags', xml, xmlJSDocTags)
-    console.log('propertyFromSignature', { property: identifier.text, xml });
+    //console.log('propertyFromSignature', { property: identifier.text, xml });
 
     const property: Tsoa.Property = {
       default: getJSDocComment(propertySignature, 'default'),
