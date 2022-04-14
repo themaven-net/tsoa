@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { getJSDocComment, getJSDocComments, getJSDocTagNames, isExistJSDocTag } from './../utils/jsDocUtils';
+import { getJSDocComment, getJSDocComments, getJSDocTags, getJSDocTagNames, isExistJSDocTag } from './../utils/jsDocUtils';
 import { getDecorators, getNodeFirstDecoratorValue, isDecorator } from './../utils/decoratorUtils';
 import { getPropertyValidators } from './../utils/validatorUtils';
 import { GenerateMetadataError, GenerateMetaDataWarning } from './exceptions';
@@ -17,6 +17,31 @@ type UsableDeclaration = ts.InterfaceDeclaration | ts.ClassDeclaration | ts.Prop
 type UsableDeclarationWithoutPropertySignature = Exclude<UsableDeclaration, ts.PropertySignature>;
 interface Context {
   [name: string]: ts.TypeReferenceNode | ts.TypeNode;
+}
+
+function getXMLSpecFromDocTags(node: ts.Node): Tsoa.XML | undefined {
+  let xml: Tsoa.XML | undefined = undefined;
+  const xmlJSDocTags = getJSDocTags(node, tag => tag.tagName.text.startsWith('xml'));
+  if (xmlJSDocTags.length) {
+    xml = {};
+    xmlJSDocTags.forEach(tag => {
+      if (xml)
+        switch (tag.tagName.text.slice(3)) {
+          case 'Name':
+            xml.name = String(tag.comment);
+            break;
+          case 'Attribute':
+            xml.attribute = Boolean(tag.comment);
+            break;
+          case 'Wrapper':
+            xml.wrapper = Boolean(tag.comment);
+            break;
+          default:
+            break;
+        }
+    });
+  }
+  return xml;
 }
 
 export class TypeResolver {
@@ -171,6 +196,8 @@ export class TypeResolver {
         .filter(property => isIgnored(property) === false)
         // Transform to property
         .map(property => {
+          const xmlJSDocTags = property.getJsDocTags().filter(tag => tag.name.startsWith('xml'));
+          console.log('isMappedTypeNode xmlJSDocTags', xmlJSDocTags);
           const propertyType = typeChecker.getTypeOfSymbolAtLocation(property, this.typeNode);
           const declaration = getDeclaration(property) as ts.PropertySignature | ts.PropertyDeclaration | ts.ParameterDeclaration | undefined;
 
@@ -682,10 +709,12 @@ export class TypeResolver {
       type: new TypeResolver(declaration.type, this.current, declaration, this.context, this.referencer || referencer).resolve(),
       validators: getPropertyValidators(declaration) || {},
       ...(example && { example }),
+      xml: getXMLSpecFromDocTags(declaration),
     };
   }
 
   private getModelReference(modelType: ts.InterfaceDeclaration | ts.ClassDeclaration, name: string) {
+    console.log('getModelReference', name);
     const example = this.getNodeExample(modelType);
     const description = this.getNodeDescription(modelType);
     const deprecated = isExistJSDocTag(modelType, tag => tag.tagName.text === 'deprecated') || isDecorator(modelType, identifier => identifier.text === 'Deprecated');
@@ -728,6 +757,7 @@ export class TypeResolver {
       refName: this.getRefTypeName(name),
       deprecated,
       ...(example && { example }),
+      xml: getXMLSpecFromDocTags(modelType),
     };
 
     referenceType.properties = referenceType.properties.concat(properties);
@@ -940,6 +970,10 @@ export class TypeResolver {
       required = false;
     }
 
+    const xml = getXMLSpecFromDocTags(propertySignature);
+    //console.log('propertyFromSignature xmlJSDocTags', xml, xmlJSDocTags)
+    console.log('propertyFromSignature', { property: identifier.text, xml });
+
     const property: Tsoa.Property = {
       default: getJSDocComment(propertySignature, 'default'),
       description: this.getNodeDescription(propertySignature),
@@ -951,6 +985,7 @@ export class TypeResolver {
       validators: getPropertyValidators(propertySignature) || {},
       deprecated: isExistJSDocTag(propertySignature, tag => tag.tagName.text === 'deprecated'),
       extensions: this.getNodeExtension(propertySignature),
+      xml,
     };
     return property;
   }

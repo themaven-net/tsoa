@@ -93,6 +93,13 @@ export namespace Tsoa {
     validators: Validators;
     deprecated: boolean;
     extensions?: Extension[];
+    xml?: XML;
+  }
+
+  export interface XML {
+    name?: string;
+    attribute?: boolean;
+    wrapper?: boolean;
   }
 
   export type TypeStringLiteral =
@@ -250,6 +257,7 @@ export namespace Tsoa {
     dataType: 'refObject';
     properties: Property[];
     additionalProperties?: Type;
+    xml?: XML;
   }
 
   export interface RefAliasType extends Omit<Property, 'name' | 'required'>, ReferenceTypeBase {

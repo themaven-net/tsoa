@@ -1,7 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-import { Controller, ValidationService, FieldErrors, ValidateError, TsoaRoute, HttpStatusCodeLiteral, TsoaResponse, fetchMiddlewares } from '@tsoa/runtime';
+import { Controller, ValidationService, FieldErrors, ValidateError, TsoaRoute, HttpStatusCodeLiteral, TsoaResponse, fetchMiddlewares, toXml } from '@tsoa/runtime';
 {{#each controllers}}
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { {{name}} } from '{{modulePath}}';
@@ -19,6 +19,7 @@ const promiseAny = require('promise.any');
 import { iocContainer } from '{{iocModule}}';
 import { IocContainer, IocContainerFactory } from '@tsoa/runtime';
 {{/if}}
+import jsontoxml from 'jsontoxml'
 import type { RequestHandler } from 'express';
 import * as express from 'express';
 {{#if useFileUploads}}
@@ -33,20 +34,20 @@ const models: TsoaRoute.Models = {
     "{{@key}}": {
         {{#if enums}}
         "dataType": "refEnum",
-        "enums": {{{json enums}}},
+        "enums": {{{json enums 2}}},
         {{/if}}
         {{#if properties}}
         "dataType": "refObject",
         "properties": {
             {{#each properties}}
-            "{{@key}}": {{{json this}}},
+            "{{@key}}": {{{json this 3}}},
             {{/each}}
         },
-        "additionalProperties": {{{json additionalProperties}}},
+        "additionalProperties": {{{json additionalProperties 2}}},
         {{/if}}
         {{#if type}}
         "dataType": "refAlias",
-        "type": {{{json type}}},
+        "type": {{{json type 2}}},
         {{/if}}
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
@@ -63,51 +64,53 @@ export function RegisterRoutes(app: express.Router) {
     // ###########################################################################################################
     {{#each controllers}}
     {{#each actions}}
-        app.{{method}}('{{fullPath}}',
-            {{#if security.length}}
-            authenticateMiddleware({{json security}}),
-            {{/if}}
-            {{#if uploadFile}}
-            upload.single('{{uploadFileName}}'),
-            {{/if}}
-            {{#if uploadFiles}}
-            upload.array('{{uploadFilesName}}'),
-            {{/if}}
-            ...(fetchMiddlewares<RequestHandler>({{../name}})),
-            ...(fetchMiddlewares<RequestHandler>({{../name}}.prototype.{{name}})),
+    app.{{method}}('{{fullPath}}',
+        {{#if security.length}}
+        authenticateMiddleware({{json security 2}}),
+        {{/if}}
+        {{#if uploadFile}}
+        upload.single('{{uploadFileName}}'),
+        {{/if}}
+        {{#if uploadFiles}}
+        upload.array('{{uploadFilesName}}'),
+        {{/if}}
+        ...(fetchMiddlewares<RequestHandler>({{../name}})),
+        ...(fetchMiddlewares<RequestHandler>({{../name}}.prototype.{{name}})),
 
-            {{#if ../../iocModule}}async {{/if}}function {{../name}}_{{name}}(request: any, response: any, next: any) {
+        {{#if ../../iocModule}}async {{/if}}function {{../name}}_{{name}}(request: any, response: any, next: any) {
+            {{log this}}
             const args = {
                 {{#each parameters}}
-                    {{@key}}: {{{json this}}},
+                {{@key}}: {{{json this 4}}},
                 {{/each}}
             };
+            const responses = {{{json responses 3}}};
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
             let validatedArgs: any[] = [];
             try {
-                validatedArgs = getValidatedArgs(args, request, response);
+                validatedArgs = getValidatedArgs(args, request, response, responses);
 
-              {{#if ../../iocModule}}
+                {{#if ../../iocModule}}
                 const container: IocContainer = typeof iocContainer === 'function' ? (iocContainer as IocContainerFactory)(request) : iocContainer;
 
                 const controller: any = await container.get<{{../name}}>({{../name}});
                 if (typeof controller['setStatus'] === 'function') {
-                controller.setStatus(undefined);
+                    controller.setStatus(undefined);
                 }
-              {{else}}
+                {{else}}
                 const controller = new {{../name}}();
-              {{/if}}
+                {{/if}}
 
 
-              const promise = controller.{{name}}.apply(controller, validatedArgs as any);
-              promiseHandler(controller, promise, response, {{successStatus}}, next);
+                const promise = controller.{{name}}.apply(controller, validatedArgs as any);
+                promiseHandler(controller, promise, request, response, {{successStatus}}, responses, next);
             } catch (err) {
                 return next(err);
             }
         });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     {{/each}}
     {{/each}}
 
@@ -181,7 +184,7 @@ export function RegisterRoutes(app: express.Router) {
         return 'getHeaders' in object && 'getStatus' in object && 'setStatus' in object;
     }
 
-    function promiseHandler(controllerObj: any, promise: any, response: any, successStatus: any, next: any) {
+    function promiseHandler(controllerObj: any, promise: any, request: any, response: any, successStatus: any, responses: any, next: any) {
         return Promise.resolve(promise)
             .then((data: any) => {
                 let statusCode = successStatus;
@@ -193,14 +196,14 @@ export function RegisterRoutes(app: express.Router) {
 
                 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
-                returnHandler(response, statusCode, data, headers)
+                returnHandler(request, response, responses, statusCode, data, headers)
             })
             .catch((error: any) => next(error));
     }
 
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
-    function returnHandler(response: any, statusCode?: number, data?: any, headers: any = {}) {
+    function returnHandler(request: any, response: any, responses: any, statusCode?: number, data?: any, headers: any = {}) {
         if (response.headersSent) {
             return;
         }
@@ -209,8 +212,19 @@ export function RegisterRoutes(app: express.Router) {
         });
         if (data && typeof data.pipe === 'function' && data.readable && typeof data._read === 'function') {
             data.pipe(response);
-        } else if (data !== null && data !== undefined) {
-            response.status(statusCode || 200).json(data);
+        } else if (data != null) {
+            switch (request.accepts(['json', 'xml'])) {
+                case 'xml': {
+                    const schema = responses[responses.length - 1].schema
+                    response.set('Content-Type', 'application/xml');
+                    response.status(statusCode || 200).end(jsontoxml([toXml(schema, data)]));
+                    break;
+                }
+                case 'json':
+                default:
+                    response.status(statusCode || 200).json(data);
+                    break;
+            }
         } else {
             response.status(statusCode || 204).end();
         }
@@ -218,15 +232,15 @@ export function RegisterRoutes(app: express.Router) {
 
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
-    function responder(response: any): TsoaResponse<HttpStatusCodeLiteral, unknown>  {
+    function responder(request: any, response: any, responses: any): TsoaResponse<HttpStatusCodeLiteral, unknown>  {
         return function(status, data, headers) {
-            returnHandler(response, status, data, headers);
+            returnHandler(request, response, responses, status, data, headers);
         };
     };
 
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
-    function getValidatedArgs(args: any, request: any, response: any): any[] {
+    function getValidatedArgs(args: any, request: any, response: any, responses: any): any[] {
         const fieldErrors: FieldErrors  = {};
         const values = Object.keys(args).map((key) => {
             const name = args[key].name;
@@ -234,25 +248,25 @@ export function RegisterRoutes(app: express.Router) {
                 case 'request':
                     return request;
                 case 'query':
-                    return validationService.ValidateParam(args[key], request.query[name], name, fieldErrors, undefined, {{{json minimalSwaggerConfig}}});
+                    return validationService.ValidateParam(args[key], request.query[name], name, fieldErrors, undefined, {{{json minimalSwaggerConfig 5}}});
                 case 'path':
-                    return validationService.ValidateParam(args[key], request.params[name], name, fieldErrors, undefined, {{{json minimalSwaggerConfig}}});
+                    return validationService.ValidateParam(args[key], request.params[name], name, fieldErrors, undefined, {{{json minimalSwaggerConfig 5}}});
                 case 'header':
-                    return validationService.ValidateParam(args[key], request.header(name), name, fieldErrors, undefined, {{{json minimalSwaggerConfig}}});
+                    return validationService.ValidateParam(args[key], request.header(name), name, fieldErrors, undefined, {{{json minimalSwaggerConfig 5}}});
                 case 'body':
-                    return validationService.ValidateParam(args[key], request.body, name, fieldErrors, undefined, {{{json minimalSwaggerConfig}}});
+                    return validationService.ValidateParam(args[key], request.body, name, fieldErrors, undefined, {{{json minimalSwaggerConfig 5}}});
                 case 'body-prop':
-                    return validationService.ValidateParam(args[key], request.body[name], name, fieldErrors, 'body.', {{{json minimalSwaggerConfig}}});
+                    return validationService.ValidateParam(args[key], request.body[name], name, fieldErrors, 'body.', {{{json minimalSwaggerConfig 5}}});
                 case 'formData':
                     if (args[key].dataType === 'file') {
-                        return validationService.ValidateParam(args[key], request.file, name, fieldErrors, undefined, {{{json minimalSwaggerConfig}}});
+                        return validationService.ValidateParam(args[key], request.file, name, fieldErrors, undefined, {{{json minimalSwaggerConfig 6}}});
                     } else if (args[key].dataType === 'array' && args[key].array.dataType === 'file') {
-                        return validationService.ValidateParam(args[key], request.files, name, fieldErrors, undefined, {{{json minimalSwaggerConfig}}});
+                        return validationService.ValidateParam(args[key], request.files, name, fieldErrors, undefined, {{{json minimalSwaggerConfig 6}}});
                     } else {
-                        return validationService.ValidateParam(args[key], request.body[name], name, fieldErrors, undefined, {{{json minimalSwaggerConfig}}});
+                        return validationService.ValidateParam(args[key], request.body[name], name, fieldErrors, undefined, {{{json minimalSwaggerConfig 6}}});
                     }
                 case 'res':
-                    return responder(response);
+                    return responder(request, response, responses);
             }
         });
 

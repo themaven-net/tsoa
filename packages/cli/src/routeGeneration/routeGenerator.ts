@@ -39,8 +39,11 @@ export class RouteGenerator {
   }
 
   public buildContent(middlewareTemplate: string, pathTransformer: (path: string) => string) {
-    handlebars.registerHelper('json', (context: any) => {
-      return JSON.stringify(context);
+    handlebars.registerHelper('json', function (context, level = 0) {
+      const space = 4;
+      const indentation = '\n'.padEnd(space * level + 1, ' ');
+      const stringified = JSON.stringify(context, null, space);
+      return stringified.replace(/\n/g, indentation);
     });
     const additionalPropsHelper = (additionalProperties: TsoaRoute.RefObjectModelSchema['additionalProperties']) => {
       if (additionalProperties) {
@@ -98,6 +101,7 @@ export class RouteGenerator {
               uploadFilesName: uploadFilesParameter?.name,
               security: method.security,
               successStatus: method.successStatus ? method.successStatus : 'undefined',
+              responses: method.responses,
             };
           }),
           modulePath: this.getRelativeImportPath(controller.location),
