@@ -13,7 +13,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lukeautry/tsoa.git"
+    "url": "https://github.com/themaven-net/tsoa.git"
   },
   "engines": {
     "yarn": ">=1.9.4",
