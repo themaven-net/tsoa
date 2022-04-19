@@ -1,5 +1,5 @@
 {
-  "name": "tsoa",
+  "name": "@themaven-net/tsoa",
   "description": "Build swagger-compliant REST APIs using TypeScript and Node",
   "version": "4.0.0-arena.1",
   "main": "./dist/index.js",
@@ -25,8 +25,8 @@
   "author": "Luke Autry <lukeautry@gmail.com> (http://www.lukeautry.com)",
   "license": "MIT",
   "dependencies": {
-    "@tsoa/cli": "^4.0.0-arena.1",
-    "@tsoa/runtime": "^4.0.0-arena.1"
+    "@themaven-net/tsoa-cli": "^4.0.0-arena.1",
+    "@themaven-net/tsoa-runtime": "^4.0.0-arena.1"
   },
   "devDependencies": {
     "@types/node": "^14.11.1",
