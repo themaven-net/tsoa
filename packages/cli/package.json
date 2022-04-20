@@ -27,7 +27,7 @@
   "author": "Luke Autry <lukeautry@gmail.com> (http://www.lukeautry.com)",
   "license": "MIT",
   "dependencies": {
-    "@themaven-net/tsoa-runtime": "^4.0.0-arena.2",
+    "@tsoa/runtime": "npm:@themaven-net/tsoa-runtime@^4.0.0-arena.2",
     "deepmerge": "^4.2.2",
     "fs-extra": "^8.1.0",
     "glob": "^7.1.6",

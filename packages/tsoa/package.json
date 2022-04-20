@@ -25,8 +25,8 @@
   "author": "Luke Autry <lukeautry@gmail.com> (http://www.lukeautry.com)",
   "license": "MIT",
   "dependencies": {
-    "@themaven-net/tsoa-cli": "^4.0.0-arena.2",
-    "@themaven-net/tsoa-runtime": "^4.0.0-arena.2"
+    "@tsoa/cli": "npm:@themaven-net/tsoa-cli@^4.0.0-arena.2",
+    "@tsoa/runtime": "npm:@themaven-net/tsoa-runtime@^4.0.0-arena.2"
   },
   "devDependencies": {
     "@types/node": "^14.11.1",
