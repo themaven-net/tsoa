@@ -1335,10 +1335,12 @@ describe('Koa Server', () => {
         .end((err: any, res: any) => {
           let parsedError: any;
 
-          try {
-            parsedError = JSON.parse(res.error);
-          } catch (err) {
-            parsedError = res.error;
+          if (res != null) {
+            try {
+              parsedError = JSON.parse(res.error);
+            } catch (err) {
+              parsedError = res.error;
+            }
           }
 
           if (err) {

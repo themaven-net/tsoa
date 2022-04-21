@@ -259,7 +259,15 @@ it('should throw if the data has additionalProperties (on a nested Object) if no
   };
 
   // Act
-  const result = v.validateNestedObjectLiteral('objLiteral', dataToValidate, errorDictionary, minimalSwaggerConfig, models[refName].properties.objLiteral.nestedProperties, false, refName + '.');
+  const result = v.validateNestedObjectLiteral(
+    'objLiteral',
+    dataToValidate,
+    errorDictionary,
+    minimalSwaggerConfig,
+    (models[refName].properties.objLiteral as TsoaRoute.NestedObjectLiteralSchema).nestedProperties,
+    false,
+    refName + '.',
+  );
 
   // Assert
   expect(errorDictionary).to.deep.eq({
@@ -458,7 +466,15 @@ it('should not throw if the data has additionalProperties (on a nested Object) i
   };
 
   // Act
-  const result = v.validateNestedObjectLiteral('objLiteral', dataToValidate, errorDictionary, minimalSwaggerConfig, models[refName].properties.objLiteral.nestedProperties, false, refName + '.');
+  const result = v.validateNestedObjectLiteral(
+    'objLiteral',
+    dataToValidate,
+    errorDictionary,
+    minimalSwaggerConfig,
+    (models[refName].properties.objLiteral as TsoaRoute.NestedObjectLiteralSchema).nestedProperties,
+    false,
+    refName + '.',
+  );
 
   // Assert
   expect(errorDictionary).to.deep.eq({});
@@ -553,7 +569,15 @@ it('should not throw if the data has additionalProperties (on a nested Object) i
   };
 
   // Act
-  const result = v.validateNestedObjectLiteral('objLiteral', dataToValidate, errorDictionary, minimalSwaggerConfig, models[refName].properties.objLiteral.nestedProperties, false, refName + '.');
+  const result = v.validateNestedObjectLiteral(
+    'objLiteral',
+    dataToValidate,
+    errorDictionary,
+    minimalSwaggerConfig,
+    (models[refName].properties.objLiteral as TsoaRoute.NestedObjectLiteralSchema).nestedProperties,
+    false,
+    refName + '.',
+  );
 
   // Assert
   expect(errorDictionary).to.deep.eq({});

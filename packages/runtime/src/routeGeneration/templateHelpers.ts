@@ -41,6 +41,8 @@ export class ValidationService {
     }
 
     switch (property.dataType) {
+      case undefined:
+        return this.validateModel({ name, value, modelDefinition: this.models[property.ref], fieldErrors, parent, minimalSwaggerConfig });
       case 'string':
         return this.validateString(name, value, fieldErrors, property.validators, parent);
       case 'boolean':
@@ -72,9 +74,6 @@ export class ValidationService {
       case 'nestedObjectLiteral':
         return this.validateNestedObjectLiteral(name, value, fieldErrors, minimalSwaggerConfig, property.nestedProperties, property.additionalProperties, parent);
       default:
-        if (property.ref) {
-          return this.validateModel({ name, value, modelDefinition: this.models[property.ref], fieldErrors, parent, minimalSwaggerConfig });
-        }
         return value;
     }
   }
@@ -479,7 +478,7 @@ export class ValidationService {
     return Buffer.from(value);
   }
 
-  public validateUnion(name: string, value: any, fieldErrors: FieldErrors, swaggerConfig: AdditionalProps, property: TsoaRoute.PropertySchema, parent = ''): any {
+  public validateUnion(name: string, value: any, fieldErrors: FieldErrors, swaggerConfig: AdditionalProps, property: TsoaRoute.UnionSchema, parent = ''): any {
     if (!property.subSchemas) {
       throw new Error(
         'internal tsoa error: ' +
@@ -589,29 +588,33 @@ export class ValidationService {
   }
 
   private toModelLike(schema: TsoaRoute.PropertySchema): TsoaRoute.RefObjectModelSchema[] {
-    if (schema.ref) {
-      const model = this.models[schema.ref];
-      if (model.dataType === 'refObject') {
-        return [model];
-      } else if (model.dataType === 'refAlias') {
-        return [...this.toModelLike(model.type)];
-      } else if (model.dataType === 'refEnum') {
-        throw new Error(`Can't transform an enum into a model like structure because it does not have properties.`);
-      } else {
-        return assertNever(model);
+    switch (schema.dataType) {
+      case undefined: {
+        const model = this.models[schema.ref];
+        if (model.dataType === 'refObject') {
+          return [model];
+        } else if (model.dataType === 'refAlias') {
+          return [...this.toModelLike(model.type)];
+        } else if (model.dataType === 'refEnum') {
+          throw new Error(`Can't transform an enum into a model like structure because it does not have properties.`);
+        } else {
+          return assertNever(model);
+        }
       }
-    } else if (schema.nestedProperties) {
-      return [{ dataType: 'refObject', properties: schema.nestedProperties, additionalProperties: schema.additionalProperties }];
-    } else if (schema.subSchemas && schema.dataType === 'intersection') {
-      const modelss: TsoaRoute.RefObjectModelSchema[][] = schema.subSchemas.map(subSchema => this.toModelLike(subSchema));
+      case 'nestedObjectLiteral':
+        return [{ dataType: 'refObject', properties: schema.nestedProperties, additionalProperties: schema.additionalProperties }];
+      case 'intersection': {
+        const modelss: TsoaRoute.RefObjectModelSchema[][] = schema.subSchemas.map(subSchema => this.toModelLike(subSchema));
 
-      return this.selfIntersectionExcludingCombinations(modelss);
-    } else if (schema.subSchemas && schema.dataType === 'union') {
-      const modelss: TsoaRoute.RefObjectModelSchema[][] = schema.subSchemas.map(subSchema => this.toModelLike(subSchema));
-      return modelss.reduce((acc, models) => [...acc, ...models], []);
-    } else {
-      // There are no properties to check for excess here.
-      return [{ dataType: 'refObject', properties: {}, additionalProperties: false }];
+        return this.selfIntersectionExcludingCombinations(modelss);
+      }
+      case 'union': {
+        const modelss: TsoaRoute.RefObjectModelSchema[][] = schema.subSchemas.map(subSchema => this.toModelLike(subSchema));
+        return modelss.reduce((acc, models) => [...acc, ...models], []);
+      }
+      default:
+        // There are no properties to check for excess here.
+        return [{ dataType: 'refObject', properties: {}, additionalProperties: false }];
     }
   }
 

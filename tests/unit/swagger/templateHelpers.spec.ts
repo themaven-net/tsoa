@@ -868,7 +868,7 @@ describe('ValidationService', () => {
         noImplicitAdditionalProperties: 'ignore',
       };
       const fieldErrors = {};
-      const result = v.validateArray('name', ['foo', 'bar', 'foo', 'foobar'], fieldErrors, minimalSwaggerConfig, { dataType: 'refEnum', ref: 'enumModel' });
+      const result = v.validateArray('name', ['foo', 'bar', 'foo', 'foobar'], fieldErrors, minimalSwaggerConfig, { dataType: undefined, ref: 'enumModel' });
       expect(Object.keys(fieldErrors)).to.not.be.empty;
       expect(result).to.be.undefined;
       expect(fieldErrors).to.deep.equal({ 'name.$3': { message: "should be one of the following; ['foo','bar']", value: 'foobar' } });
@@ -898,7 +898,7 @@ describe('ValidationService', () => {
       const minimalSwaggerConfig: AdditionalProps = {
         noImplicitAdditionalProperties: 'silently-remove-extras',
       };
-      const schema: TsoaRoute.PropertySchema = { subSchemas: [{ ref: 'TypeA' }, { ref: 'TypeB' }] };
+      const schema: TsoaRoute.PropertySchema = { dataType: 'union', subSchemas: [{ ref: 'TypeA' }, { ref: 'TypeB' }] };
       const resultA = v.validateUnion(name, { type: 'A', a: 100 }, error, minimalSwaggerConfig, schema);
       const resultB = v.validateUnion(name, { type: 'B', b: 20 }, error, minimalSwaggerConfig, schema);
       expect(resultA).to.deep.equal({ type: 'A', a: 100 });

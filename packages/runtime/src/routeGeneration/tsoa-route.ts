@@ -42,27 +42,56 @@ export namespace TsoaRoute {
 
   export type ModelSchema = RefEnumModelSchema | RefObjectModelSchema | RefTypeAliasModelSchema;
 
+  export type PropertySchema = RefSchema | ArraySchema | EnumSchema | IntersectionSchema | UnionSchema | NestedObjectLiteralSchema | PrimitiveSchema;
+
   export type ValidatorSchema = Tsoa.Validators;
 
-  export interface PropertySchema {
-    dataType?: Tsoa.TypeStringLiteral;
-    ref?: string;
+  export interface SchemaBase {
     required?: boolean;
-    array?: PropertySchema;
-    enums?: Array<string | number | boolean | null>;
-    type?: PropertySchema;
-    subSchemas?: PropertySchema[];
     validators?: ValidatorSchema;
     default?: unknown;
-    additionalProperties?: boolean | PropertySchema;
-    nestedProperties?: { [name: string]: PropertySchema };
     xml?: Tsoa.XML;
   }
 
-  export interface ParameterSchema extends PropertySchema {
+  export interface RefSchema extends SchemaBase {
+    dataType?: undefined;
+    ref: string;
+  }
+
+  export interface ArraySchema extends SchemaBase {
+    dataType: 'array';
+    array: PropertySchema;
+  }
+
+  export interface EnumSchema extends SchemaBase {
+    dataType: 'enum';
+    enums?: Array<string | number | boolean | null>;
+  }
+
+  export interface IntersectionSchema extends SchemaBase {
+    dataType: 'intersection';
+    subSchemas: PropertySchema[];
+  }
+
+  export interface UnionSchema extends SchemaBase {
+    dataType: 'union';
+    subSchemas: PropertySchema[];
+  }
+
+  export interface NestedObjectLiteralSchema extends SchemaBase {
+    dataType: 'nestedObjectLiteral';
+    additionalProperties?: boolean | PropertySchema;
+    nestedProperties: { [name: string]: PropertySchema };
+  }
+
+  export interface PrimitiveSchema extends SchemaBase {
+    dataType: 'string' | 'boolean' | 'integer' | 'long' | 'float' | 'double' | 'date' | 'datetime' | 'buffer' | 'undefined' | 'any' | 'object' | 'void' | 'file' | 'binary' | 'byte';
+  }
+
+  export type ParameterSchema = PropertySchema & {
     name: string;
     in: string;
-  }
+  };
 
   export interface Security {
     [key: string]: string[];

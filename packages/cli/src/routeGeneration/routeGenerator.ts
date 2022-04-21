@@ -187,11 +187,11 @@ export class RouteGenerator {
   }
 
   private buildResponse(response: Tsoa.Response) {
-    if (response.schema == null) return response
-    return { 
+    if (response.schema == null) return response;
+    return {
       name: response.name,
       schema: this.buildProperty(response.schema),
-    }
+    };
   }
 
   private getRelativeImportPath(fileLocation: string) {
@@ -201,7 +201,7 @@ export class RouteGenerator {
 
   private buildPropertySchema(source: Tsoa.Property): TsoaRoute.PropertySchema {
     const propertySchema = this.buildProperty(source.type);
-    if (source.xml) propertySchema.xml = source.xml
+    if (source.xml) propertySchema.xml = source.xml;
     propertySchema.default = source.default;
     propertySchema.required = source.required ? true : undefined;
 
@@ -229,48 +229,36 @@ export class RouteGenerator {
   }
 
   private buildProperty(type: Tsoa.Type): TsoaRoute.PropertySchema {
-    const schema: TsoaRoute.PropertySchema = {
-      dataType: type.dataType,
-    };
-
-    if ((type as Record<string, any>).xml) schema.xml = (type as Record<string, any>).xml
-
-    if (isRefType(type)) {
-      schema.dataType = undefined;
-      schema.ref = type.refName;
-    }
-
-    if (type.dataType === 'array') {
-      const arrayType = type;
-
-      if (isRefType(arrayType.elementType)) {
-        schema.array = {
-          dataType: arrayType.elementType.dataType,
-          ref: arrayType.elementType.refName,
-        };
-      } else {
-        schema.array = this.buildProperty(arrayType.elementType);
-      }
-    }
-
-    if (type.dataType === 'enum') {
-      schema.enums = type.enums;
-    }
-
-    if (type.dataType === 'union' || type.dataType === 'intersection') {
-      schema.subSchemas = type.types.map(type => this.buildProperty(type));
-    }
-
-    if (type.dataType === 'nestedObjectLiteral') {
-      const objLiteral = type;
-
-      schema.nestedProperties = objLiteral.properties.reduce((acc, prop) => {
-        return { ...acc, [prop.name]: this.buildPropertySchema(prop) };
-      }, {});
-
-      schema.additionalProperties = objLiteral.additionalProperties && this.buildProperty(objLiteral.additionalProperties);
-    }
-
+    const schema = this.buildProperty0(type);
+    if ((type as Record<string, any>).xml) schema.xml = (type as Record<string, any>).xml;
     return schema;
+  }
+
+  private buildProperty0(type: Tsoa.Type): TsoaRoute.PropertySchema {
+    if (isRefType(type)) {
+      return {
+        ref: type.refName,
+      };
+    }
+
+    const { dataType } = type;
+
+    switch (dataType) {
+      case 'array':
+        return { dataType, array: this.buildProperty(type.elementType) };
+      case 'enum':
+        return { dataType, enums: type.enums };
+      case 'union':
+      case 'intersection':
+        return { dataType, subSchemas: type.types.map(type => this.buildProperty(type)) };
+      case 'nestedObjectLiteral':
+        return {
+          dataType,
+          nestedProperties: Object.fromEntries(type.properties.map(prop => [prop.name, this.buildPropertySchema(prop)])),
+          additionalProperties: type.additionalProperties && this.buildProperty(type.additionalProperties),
+        };
+      default:
+        return { dataType };
+    }
   }
 }

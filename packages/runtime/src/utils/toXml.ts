@@ -21,13 +21,12 @@ function addAttribute(node: jsontoxmlNode, name: string, value: any) {
 
 export function toXml(models: TsoaRoute.Models, schema: TsoaRoute.ModelSchema | TsoaRoute.PropertySchema, value: any, name = 'response'): jsontoxmlNode {
   function rec(schema: TsoaRoute.ModelSchema | TsoaRoute.PropertySchema, value: any, parent: jsontoxmlNode, outerName: string, outerXml?: Tsoa.XML) {
-    if ((schema as Record<string, any>).ref)
-      return rec(models[(schema as Record<string, any>).ref], value, parent, schema?.xml?.name ?? outerName, schema.xml ?? outerXml)
+    if ((schema as Record<string, any>).ref) return rec(models[(schema as Record<string, any>).ref], value, parent, schema?.xml?.name ?? outerName, schema.xml ?? outerXml);
     const name = (schema as Record<string, any>).xml?.name ?? outerName;
     switch (schema.dataType) {
       case 'refObject':
       case 'nestedObjectLiteral': {
-        const properties = schema.dataType === 'refObject' ? (schema as TsoaRoute.RefObjectModelSchema).properties : (schema ).nestedProperties ?? {}
+        const properties = schema.dataType === 'refObject' ? schema.properties : schema.nestedProperties;
         const wrapper = makeNode(name);
         addChild(parent, wrapper);
         for (const [propertyKey, propertySchema] of Object.entries(properties)) {
@@ -45,11 +44,11 @@ export function toXml(models: TsoaRoute.Models, schema: TsoaRoute.ModelSchema | 
           wrapper = makeNode(name);
           addChild(parent, wrapper);
         }
-        for (const item of value) rec(schema.array ?? {}, item, wrapper, name, outerXml);
+        for (const item of value) rec(schema.array, item, wrapper, name, outerXml);
         break;
       }
       case 'refAlias': {
-        rec((schema as TsoaRoute.RefTypeAliasModelSchema).type, value, parent, name, schema?.xml ?? outerXml);
+        rec(schema.type, value, parent, name, schema?.xml ?? outerXml);
         break;
       }
       default: {
