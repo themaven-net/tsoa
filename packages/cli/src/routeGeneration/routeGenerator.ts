@@ -43,7 +43,7 @@ export class RouteGenerator {
       const space = 4;
       const indentation = '\n'.padEnd(space * level + 1, ' ');
       const stringified = JSON.stringify(context, null, space);
-      return stringified.replace(/\n/g, indentation);
+      return stringified?.replace(/\n/g, indentation);
     });
     const additionalPropsHelper = (additionalProperties: TsoaRoute.RefObjectModelSchema['additionalProperties']) => {
       if (additionalProperties) {
@@ -101,7 +101,7 @@ export class RouteGenerator {
               uploadFilesName: uploadFilesParameter?.name,
               security: method.security,
               successStatus: method.successStatus ? method.successStatus : 'undefined',
-              responses: method.responses,
+              responses: method.responses.map(response => this.buildResponse(response)),
             };
           }),
           modulePath: this.getRelativeImportPath(controller.location),
@@ -163,6 +163,8 @@ export class RouteGenerator {
           // Since Swagger allows "excess properties" (to use a TypeScript term) by default
           refObjModel.additionalProperties = true;
         }
+        if (referenceType.xml) refObjModel.xml = referenceType.xml;
+
         model = refObjModel;
       } else if (referenceType.dataType === 'refAlias') {
         const refType: TsoaRoute.RefTypeAliasModelSchema = {
@@ -173,6 +175,7 @@ export class RouteGenerator {
             default: referenceType.default,
           },
         };
+        if (referenceType.xml) refType.xml = referenceType.xml;
         model = refType;
       } else {
         model = assertNever(referenceType);
@@ -183,6 +186,14 @@ export class RouteGenerator {
     return models;
   }
 
+  private buildResponse(response: Tsoa.Response) {
+    if (response.schema == null) return response
+    return { 
+      name: response.name,
+      schema: this.buildProperty(response.schema),
+    }
+  }
+
   private getRelativeImportPath(fileLocation: string) {
     fileLocation = fileLocation.replace(/.ts$/, ''); // no ts extension in import
     return `./${path.relative(this.options.routesDir, fileLocation).replace(/\\/g, '/')}${this.options.esm ? '.js' : ''}`;
@@ -190,6 +201,7 @@ export class RouteGenerator {
 
   private buildPropertySchema(source: Tsoa.Property): TsoaRoute.PropertySchema {
     const propertySchema = this.buildProperty(source.type);
+    if (source.xml) propertySchema.xml = source.xml
     propertySchema.default = source.default;
     propertySchema.required = source.required ? true : undefined;
 
@@ -220,6 +232,8 @@ export class RouteGenerator {
     const schema: TsoaRoute.PropertySchema = {
       dataType: type.dataType,
     };
+
+    if ((type as Record<string, any>).xml) schema.xml = (type as Record<string, any>).xml
 
     if (isRefType(type)) {
       schema.dataType = undefined;

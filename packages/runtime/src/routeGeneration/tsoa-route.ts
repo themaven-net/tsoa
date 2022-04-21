@@ -24,17 +24,20 @@ export namespace TsoaRoute {
   export interface RefEnumModelSchema {
     dataType: 'refEnum';
     enums: Array<string | number>;
+    xml?: Tsoa.XML;
   }
 
   export interface RefObjectModelSchema {
     dataType: 'refObject';
     properties: { [name: string]: PropertySchema };
     additionalProperties?: boolean | PropertySchema;
+    xml?: Tsoa.XML;
   }
 
   export interface RefTypeAliasModelSchema {
     dataType: 'refAlias';
     type: PropertySchema;
+    xml?: Tsoa.XML;
   }
 
   export type ModelSchema = RefEnumModelSchema | RefObjectModelSchema | RefTypeAliasModelSchema;
@@ -53,6 +56,7 @@ export namespace TsoaRoute {
     default?: unknown;
     additionalProperties?: boolean | PropertySchema;
     nestedProperties?: { [name: string]: PropertySchema };
+    xml?: Tsoa.XML;
   }
 
   export interface ParameterSchema extends PropertySchema {

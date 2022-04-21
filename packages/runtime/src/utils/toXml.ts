@@ -1,4 +1,5 @@
-import { Tsoa } from './../metadataGeneration/tsoa';
+import type { Tsoa } from './../metadataGeneration/tsoa';
+import type { TsoaRoute } from './../routeGeneration/tsoa-route';
 
 type jsontoxmlNode = {
   name: string;
@@ -18,19 +19,22 @@ function addAttribute(node: jsontoxmlNode, name: string, value: any) {
   node.attrs[name] = String(value);
 }
 
-export function toXml(schema: Tsoa.Type, value: any, name = 'response'): jsontoxmlNode {
-  function rec(schema: Tsoa.Type, value: any, parent: jsontoxmlNode, outerName: string, outerXml?: Tsoa.XML) {
+export function toXml(models: TsoaRoute.Models, schema: TsoaRoute.ModelSchema | TsoaRoute.PropertySchema, value: any, name = 'response'): jsontoxmlNode {
+  function rec(schema: TsoaRoute.ModelSchema | TsoaRoute.PropertySchema, value: any, parent: jsontoxmlNode, outerName: string, outerXml?: Tsoa.XML) {
+    if ((schema as Record<string, any>).ref)
+      return rec(models[(schema as Record<string, any>).ref], value, parent, schema?.xml?.name ?? outerName, schema.xml ?? outerXml)
     const name = (schema as Record<string, any>).xml?.name ?? outerName;
     switch (schema.dataType) {
       case 'refObject':
       case 'nestedObjectLiteral': {
+        const properties = schema.dataType === 'refObject' ? (schema as TsoaRoute.RefObjectModelSchema).properties : (schema ).nestedProperties ?? {}
         const wrapper = makeNode(name);
         addChild(parent, wrapper);
-        for (const property of schema.properties) {
-          const propertyValue = value[property.name];
+        for (const [propertyKey, propertySchema] of Object.entries(properties)) {
+          const propertyValue = value[propertyKey];
           if (propertyValue !== undefined) {
-            //console.log('toXml property', property.name);
-            rec(property.type, propertyValue, wrapper, property.xml?.name ?? property.name, property.xml);
+            //console.log('toXml propertyKey', propertyKey);
+            rec(propertySchema, propertyValue, wrapper, propertySchema.xml?.name ?? propertyKey, propertySchema.xml);
           }
         }
         break;
@@ -41,11 +45,11 @@ export function toXml(schema: Tsoa.Type, value: any, name = 'response'): jsontox
           wrapper = makeNode(name);
           addChild(parent, wrapper);
         }
-        for (const item of value) rec(schema.elementType, item, wrapper, name, outerXml);
+        for (const item of value) rec(schema.array ?? {}, item, wrapper, name, outerXml);
         break;
       }
       case 'refAlias': {
-        rec(schema.type, value, parent, name, schema?.xml ?? outerXml);
+        rec((schema as TsoaRoute.RefTypeAliasModelSchema).type, value, parent, name, schema?.xml ?? outerXml);
         break;
       }
       default: {

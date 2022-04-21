@@ -19,7 +19,11 @@ const promiseAny = require('promise.any');
 import { iocContainer } from '{{iocModule}}';
 import { IocContainer, IocContainerFactory } from '@tsoa/runtime';
 {{/if}}
-import jsontoxml from 'jsontoxml'
+{{#if esm}}
+import jsontoxml from 'jsontoxml';
+{{else}}
+const jsontoxml = require('jsontoxml');
+{{/if}}
 import type { RequestHandler } from 'express';
 import * as express from 'express';
 {{#if useFileUploads}}
@@ -29,30 +33,7 @@ const upload = multer({{{json multerOpts}}});
 
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
-const models: TsoaRoute.Models = {
-    {{#each models}}
-    "{{@key}}": {
-        {{#if enums}}
-        "dataType": "refEnum",
-        "enums": {{{json enums 2}}},
-        {{/if}}
-        {{#if properties}}
-        "dataType": "refObject",
-        "properties": {
-            {{#each properties}}
-            "{{@key}}": {{{json this 3}}},
-            {{/each}}
-        },
-        "additionalProperties": {{{json additionalProperties 2}}},
-        {{/if}}
-        {{#if type}}
-        "dataType": "refAlias",
-        "type": {{{json type 2}}},
-        {{/if}}
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    {{/each}}
-};
+const models: TsoaRoute.Models = {{json models 0}};
 const validationService = new ValidationService(models);
 
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
@@ -216,7 +197,7 @@ export function RegisterRoutes(app: express.Router) {
                 case 'xml': {
                     const schema = responses[responses.length - 1].schema
                     response.set('Content-Type', 'application/xml');
-                    response.status(statusCode || 200).end(jsontoxml([toXml(schema, data)]));
+                    response.status(statusCode || 200).end(jsontoxml([toXml(models, schema, data)]));
                     break;
                 }
                 case 'json':
