@@ -10,6 +10,9 @@ import {
   TestClassModel,
   TestModel,
   TestSubModel,
+  TestXml1,
+  TestXml2,
+  TestXml3,
   SimpleClassWithToJSON,
   IndexedValue,
   IndexedValueReference,
@@ -299,6 +302,21 @@ export class GetTestController extends Controller {
   @Get('IndexedValueGeneric')
   public async getIndexedValueGeneric(): Promise<IndexedValueGeneric<IndexedValueTypeReference>> {
     return 'FOO';
+  }
+
+  @Get('TestXml1')
+  public async getXml1(): Promise<TestXml1> {
+    return new ModelService().getXmlModel();
+  }
+
+  @Get('TestXml2')
+  public async getXml2(): Promise<TestXml2> {
+    return new ModelService().getXmlModel();
+  }
+
+  @Get('TestXml3')
+  public async getXml3(): Promise<TestXml3> {
+    return new ModelService().getXmlModel();
   }
 }
 

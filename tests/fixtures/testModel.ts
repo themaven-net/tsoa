@@ -928,3 +928,41 @@ type OrderDirection = 'asc' | 'desc';
 type OrderOptions<E> = `${keyof E & string}:${OrderDirection}`;
 
 type TemplateLiteralString = OrderOptions<ParameterTestModel>;
+
+interface Animal {
+  name: string;
+}
+
+/**
+ * @xmlName animal
+ */
+type AnimalXml = Animal;
+
+export interface TestXml1 {
+  animals: Animal[];
+  total: number;
+}
+
+export interface TestXml2 {
+  /**
+   * @xmlName animal
+   */
+  animals: Animal[];
+  total: number;
+}
+
+/**
+ * @xmlName test-xml-3
+ */
+export interface TestXml3 {
+  /**
+   * @xmlName animals
+   * @xmlWrapped true
+   */
+  animals: AnimalXml[];
+  /**
+   * @xmlName count
+   * @xmlAttribute true
+   */
+  total: number;
+}

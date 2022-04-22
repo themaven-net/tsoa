@@ -33,8 +33,8 @@ function getXMLSpecFromDocTags(node: ts.Node): Tsoa.XML | undefined {
           case 'Attribute':
             xml.attribute = Boolean(tag.comment);
             break;
-          case 'Wrapper':
-            xml.wrapper = Boolean(tag.comment);
+          case 'Wrapped':
+            xml.wrapped = Boolean(tag.comment);
             break;
           default:
             break;

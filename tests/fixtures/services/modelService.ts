@@ -1,4 +1,4 @@
-import { TestClassModel, TestModel, TestSubModel } from '../testModel';
+import { TestClassModel, TestModel, TestSubModel, TestXml1 } from '../testModel';
 
 export class ModelService {
   public getModel(): TestModel {
@@ -47,5 +47,12 @@ export class ModelService {
     testClassModel.publicStringProperty = 'public string property';
 
     return testClassModel;
+  }
+
+  public getXmlModel(): TestXml1 {
+    return {
+      animals: [{ name: 'dog' }, { name: 'cat' }],
+      total: 2,
+    };
   }
 }

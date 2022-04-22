@@ -309,7 +309,7 @@ export namespace Swagger {
   }
 
   export interface XML {
-    type?: string;
+    name?: string;
     namespace?: string;
     prefix?: string;
     attribute?: boolean;

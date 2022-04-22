@@ -99,7 +99,7 @@ export namespace Tsoa {
   export interface XML {
     name?: string;
     attribute?: boolean;
-    wrapper?: boolean;
+    wrapped?: boolean;
   }
 
   export type TypeStringLiteral =

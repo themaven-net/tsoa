@@ -2584,4 +2584,14 @@ describe('Definition generation for OpenAPI 3.0.0', () => {
       expectTestModelContent(responses?.['500']);
     });
   });
+
+  describe('XML support', () => {
+    it('understands XML JSDoc comments and serializes them into the spec', () => {
+      expect(getComponentSchema('TestXml2', specDefault).properties?.animals.xml?.name).to.eq('animal');
+      expect(getComponentSchema('TestXml3', specDefault).properties?.animals.xml?.name).to.eq('animals');
+      // TODO
+      //expect(getComponentSchema('TestXml3', specDefault).properties?.animals.items?.xml?.name).to.eq('animal');
+      expect(getComponentSchema('TestXml3', specDefault).properties?.animals.xml?.wrapped).to.eq(true);
+    });
+  });
 });
