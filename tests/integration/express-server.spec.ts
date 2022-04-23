@@ -1442,7 +1442,12 @@ describe('Express Server', () => {
 
   describe('XML support', () => {
     it('returns XML when requested', async () => {
-      const verify = (endpoint: string, body: string) => request(app).get(`${basePath}/GetTest/${endpoint}`).set('Accept', 'application/xml').expect('Content-Type', /xml/).expect(200, body);
+      const verify = (endpoint: string, body: string) =>
+        request(app)
+          .get(`${basePath}/GetTest/${endpoint}`)
+          .set('Accept', 'application/xml')
+          .expect('Content-Type', /xml/)
+          .expect(200, '<?xml version="1.0" encoding="utf-8" standalone="yes"?>' + body);
       await verify('TestXml1', '<TestXml1><animals><name>dog</name></animals><animals><name>cat</name></animals><total>2</total></TestXml1>');
       await verify('TestXml2', '<TestXml2><animal><name>dog</name></animal><animal><name>cat</name></animal><total>2</total></TestXml2>');
       await verify('TestXml3', '<test-xml-3 count="2"><animals><animal><name>dog</name></animal><animal><name>cat</name></animal></animals></test-xml-3>');
