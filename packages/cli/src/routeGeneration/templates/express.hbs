@@ -193,9 +193,11 @@ export function RegisterRoutes(app: express.Router) {
         if (data && typeof data.pipe === 'function' && data.readable && typeof data._read === 'function') {
             data.pipe(response);
         } else if (data != null) {
-            switch (request.accepts(['json', 'xml'])) {
+            const responseDef = responses[responses.length - 1];
+            const acceptsPrecedence = responseDef.produces?.[0] === 'application/xml' ? ['xml', 'json'] : ['json', 'xml'];
+            switch (request.accepts(acceptsPrecedence)) {
                 case 'xml': {
-                    const schema = responses[responses.length - 1].schema
+                    const schema = responseDef.schema;
                     response.set('Content-Type', 'application/xml');
                     response.status(statusCode || 200).end(jsontoxml([toXml(models, schema, data)], {
                       escape: true,

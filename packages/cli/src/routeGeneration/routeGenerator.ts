@@ -191,6 +191,7 @@ export class RouteGenerator {
     return {
       name: response.name,
       schema: this.buildProperty(response.schema),
+      produces: response.produces,
     };
   }
 
