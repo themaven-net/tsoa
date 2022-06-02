@@ -103,6 +103,7 @@ describe('Definition generation for OpenAPI 3.0.0', () => {
       expect(specDefault.spec.info).to.deep.equal({
         title: 'Test API',
         description: 'Description of a test API',
+        termsOfService: 'https://example.com/terms/',
         contact: { email: 'jane@doe.com', name: 'Jane Doe', url: 'www.jane-doe.com' },
         license: { name: 'MIT' },
         version: '1.0.0',
@@ -364,6 +365,26 @@ describe('Definition generation for OpenAPI 3.0.0', () => {
         });
       });
     });
+
+    it('Supports custom example labels', () => {
+      const metadata = new MetadataGenerator('./fixtures/controllers/exampleController.ts').Generate();
+      const exampleSpec = new SpecGenerator3(metadata, getDefaultExtendedOptions()).GetSpec();
+
+      const examples = exampleSpec.paths['/ExampleTest/CustomBodyExampleLabels']?.post?.requestBody!.content!['application/json'].examples;
+
+      expect(examples).to.deep.eq({
+        '': {
+          value: 'No Custom Label',
+        },
+        CustomLabel: { value: 'CustomLabel' },
+        CustomLabel2: { value: 'CustomLabel2' },
+        'Example 1': { value: 'Unlabeled 1' },
+        'Example 2': { value: 'Another unlabeled one' },
+        'Example 3': {
+          value: 'Unlabeled 2',
+        },
+      });
+    });
   });
 
   describe('paths', () => {
@@ -501,6 +522,40 @@ describe('Definition generation for OpenAPI 3.0.0', () => {
                     format: 'binary',
                   },
                 },
+              },
+            },
+          },
+        });
+      });
+      it('should consume multipart/form-data and have multiple formData parameter with optional descriptions', () => {
+        // Act
+        const specPost = new SpecGenerator3(metadataPost, getDefaultExtendedOptions()).GetSpec();
+        const pathPost = specPost.paths['/PostTest/DescriptionOfFileAndFormFields'].post;
+        if (!pathPost) {
+          throw new Error('PostTest file method not defined');
+        }
+        if (!pathPost.requestBody) {
+          throw new Error('PostTest file method has no requestBody');
+        }
+
+        // Assert
+        expect(pathPost.parameters).to.have.length(0);
+        expect(pathPost.requestBody).to.deep.equal({
+          required: true,
+          content: {
+            'multipart/form-data': {
+              schema: {
+                type: 'object',
+                properties: {
+                  file: {
+                    type: 'string',
+                    format: 'binary',
+                    description: 'File description of multipart',
+                  },
+                  a: { type: 'string', description: 'FormField description of multipart' },
+                  c: { type: 'string' },
+                },
+                required: ['file', 'a', 'c'],
               },
             },
           },
@@ -2526,7 +2581,7 @@ describe('Definition generation for OpenAPI 3.0.0', () => {
   describe('module declarations with namespaces', () => {
     it('should generate the proper schema for a model declared in a namespace in a module', () => {
       /* tslint:disable:no-string-literal */
-      const ref = specDefault.spec.paths['/GetTest/ModuleRedeclarationAndNamespace'].get?.responses['200'].content?.['application/json']['schema']['$ref'];
+      const ref = specDefault.spec.paths['/GetTest/ModuleRedeclarationAndNamespace'].get?.responses['200'].content?.['application/json']['schema']?.['$ref'];
       /* tslint:enable:no-string-literal */
       expect(ref).to.equal('#/components/schemas/TsoaTest.TestModel73');
       expect(getComponentSchema('TsoaTest.TestModel73', specDefault)).to.deep.equal({
@@ -2582,6 +2637,22 @@ describe('Definition generation for OpenAPI 3.0.0', () => {
 
       expectTestModelContent(responses?.['400']);
       expectTestModelContent(responses?.['500']);
+    });
+  });
+
+  describe('inline title tag generation', () => {
+    const metadata = new MetadataGenerator('./fixtures/controllers/parameterController.ts').Generate();
+
+    it('should generate title tag for request', () => {
+      const currentSpec = new SpecGenerator3(metadata, { ...getDefaultExtendedOptions(), useTitleTagsForInlineObjects: true }).GetSpec();
+      expect(currentSpec.paths['/ParameterTest/Inline1'].post?.responses['200'].content?.['application/json'].schema?.title).to.equal('Inline1Response');
+      expect(currentSpec.paths['/ParameterTest/Inline1'].post?.requestBody?.content['application/json'].schema?.title).to.equal('Inline1RequestBody');
+    });
+
+    it('should not generate title tag for request', () => {
+      const currentSpec = new SpecGenerator3(metadata, { ...getDefaultExtendedOptions(), useTitleTagsForInlineObjects: false }).GetSpec();
+      expect(currentSpec.paths['/ParameterTest/Inline1'].post?.responses['200'].content?.['application/json'].schema?.title).to.equal(undefined);
+      expect(currentSpec.paths['/ParameterTest/Inline1'].post?.requestBody?.content['application/json'].schema?.title).to.equal(undefined);
     });
   });
 

@@ -23,6 +23,9 @@ describe('Schema details generation', () => {
   if (!spec.info.description) {
     throw new Error('No spec info description.');
   }
+  if (!spec.info.termsOfService) {
+    throw new Error('No spec info termsOfService.');
+  }
   if (!spec.info.version) {
     throw new Error('No spec info version.');
   }
@@ -35,6 +38,9 @@ describe('Schema details generation', () => {
   });
   it('should set API description if provided', () => {
     expect(spec.info.description).to.equal(getDefaultExtendedOptions().description);
+  });
+  it('should set API termsOfService if provided', () => {
+    expect(spec.info.termsOfService).to.equal(getDefaultExtendedOptions().termsOfService);
   });
   it('should set API version if provided', () => {
     expect(spec.info.version).to.equal(getDefaultExtendedOptions().version);
@@ -228,6 +234,45 @@ describe('Schema details generation', () => {
         });
         expect(pathPost.parameters[1]).to.deep.equal({
           ...baseParameter,
+          name: 'a',
+          type: 'string',
+        });
+        expect(pathPost.parameters[2]).to.deep.equal({
+          ...baseParameter,
+          name: 'c',
+          type: 'string',
+        });
+      });
+      it('should consume multipart/form-data and have multiple formData parameter with optional descriptions', () => {
+        // Act
+        const specPost = new SpecGenerator2(metadataPost, getDefaultExtendedOptions()).GetSpec();
+        const pathPost = specPost.paths['/PostTest/DescriptionOfFileAndFormFields'].post;
+        if (!pathPost) {
+          throw new Error('PostTest file method not defined');
+        }
+        if (!pathPost.parameters?.length) {
+          throw new Error('PostTest file method has no parameters');
+        }
+
+        // Assert
+        expect(pathPost.consumes).to.include('multipart/form-data');
+        const baseParameter = {
+          default: undefined,
+          description: undefined,
+          enum: undefined,
+          items: undefined,
+          required: true,
+          in: 'formData',
+        };
+        expect(pathPost.parameters[0]).to.deep.equal({
+          ...baseParameter,
+          description: 'File description of multipart',
+          name: 'file',
+          type: 'file',
+        });
+        expect(pathPost.parameters[1]).to.deep.equal({
+          ...baseParameter,
+          description: 'FormField description of multipart',
           name: 'a',
           type: 'string',
         });

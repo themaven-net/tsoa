@@ -54,6 +54,9 @@ export class SpecGenerator3 extends SpecGenerator {
     if (this.config.description) {
       info.description = this.config.description;
     }
+    if (this.config.termsOfService) {
+      info.termsOfService = this.config.termsOfService;
+    }
     if (this.config.license) {
       info.license = { name: this.config.license };
     }
@@ -332,14 +335,14 @@ export class SpecGenerator3 extends SpecGenerator {
           swaggerResponses[res.name].content = {
             ...content,
             [p]: {
-              schema: this.getSwaggerType(res.schema),
-            } as Swagger.Schema3,
+              schema: this.getSwaggerType(res.schema, this.config.useTitleTagsForInlineObjects ? this.getOperationId(controllerName, method) + 'Response' : undefined) as Swagger.Schema3,
+            },
           };
         }
 
         if (res.examples) {
           let exampleCounter = 1;
-          const examples = res.examples.reduce<Swagger.Example['examples']>((acc, ex, currentIndex) => {
+          const examples = res.examples.reduce((acc, ex, currentIndex) => {
             const exampleLabel = res.exampleLabels?.[currentIndex];
             return { ...acc, [exampleLabel === undefined ? `Example ${exampleCounter++}` : exampleLabel]: { value: ex } };
           }, {});
@@ -434,23 +437,24 @@ export class SpecGenerator3 extends SpecGenerator {
 
     const mediaType: Swagger.MediaType = {
       schema: {
-        ...this.getSwaggerType(parameter.type),
+        ...this.getSwaggerType(parameter.type, this.config.useTitleTagsForInlineObjects ? this.getOperationId(controllerName, method) + 'RequestBody' : undefined),
         ...validators,
+        ...(parameter.description && { description: parameter.description }),
       },
     };
 
     const parameterExamples = parameter.example;
+    const parameterExampleLabels = parameter.exampleLabels;
     if (parameterExamples === undefined) {
       mediaType.example = parameterExamples;
     } else if (parameterExamples.length === 1) {
       mediaType.example = parameterExamples[0];
     } else {
-      mediaType.examples = {};
-      parameterExamples.forEach((example, index) =>
-        Object.assign(mediaType.examples, {
-          [`Example ${index + 1}`]: { value: example } as Swagger.Example3,
-        }),
-      );
+      let exampleCounter = 1;
+      mediaType.examples = parameterExamples.reduce((acc, ex, currentIndex) => {
+        const exampleLabel = parameterExampleLabels?.[currentIndex];
+        return { ...acc, [exampleLabel === undefined ? `Example ${exampleCounter++}` : exampleLabel]: { value: ex } };
+      }, {});
     }
 
     return mediaType;
@@ -503,17 +507,17 @@ export class SpecGenerator3 extends SpecGenerator {
     parameter.schema = Object.assign({}, parameter.schema, validatorObjs);
 
     const parameterExamples = source.example;
+    const parameterExampleLabels = source.exampleLabels;
     if (parameterExamples === undefined) {
       parameter.example = parameterExamples;
     } else if (parameterExamples.length === 1) {
       parameter.example = parameterExamples[0];
     } else {
-      parameter.examples = {};
-      parameterExamples.forEach((example, index) =>
-        Object.assign(parameter.examples, {
-          [`Example ${index + 1}`]: { value: example } as Swagger.Example3,
-        }),
-      );
+      let exampleCounter = 1;
+      parameter.examples = parameterExamples.reduce((acc, ex, currentIndex) => {
+        const exampleLabel = parameterExampleLabels?.[currentIndex];
+        return { ...acc, [exampleLabel === undefined ? `Example ${exampleCounter++}` : exampleLabel]: { value: ex } };
+      }, {});
     }
 
     return parameter;
@@ -621,7 +625,7 @@ export class SpecGenerator3 extends SpecGenerator {
     }
   }
 
-  protected getSwaggerTypeForUnionType(type: Tsoa.UnionType) {
+  protected getSwaggerTypeForUnionType(type: Tsoa.UnionType, title?: string) {
     // Filter out nulls and undefineds
     const actualSwaggerTypes = this.removeDuplicateSwaggerTypes(
       this.groupEnums(
@@ -642,30 +646,30 @@ export class SpecGenerator3 extends SpecGenerator {
         if (swaggerType.$ref) {
           return { allOf: [swaggerType], nullable };
         }
-        return { ...swaggerType, nullable };
+        return { ...(title && { title }), ...swaggerType, nullable };
       } else {
-        return { anyOf: actualSwaggerTypes, nullable };
+        return { ...(title && { title }), anyOf: actualSwaggerTypes, nullable };
       }
     } else {
       if (actualSwaggerTypes.length === 1) {
-        return actualSwaggerTypes[0];
+        return { ...(title && { title }), ...actualSwaggerTypes[0] };
       } else {
-        return { anyOf: actualSwaggerTypes };
+        return { ...(title && { title }), anyOf: actualSwaggerTypes };
       }
     }
   }
 
-  protected getSwaggerTypeForIntersectionType(type: Tsoa.IntersectionType) {
-    return { allOf: type.types.map(x => this.getSwaggerType(x)) };
+  protected getSwaggerTypeForIntersectionType(type: Tsoa.IntersectionType, title?: string) {
+    return { allOf: type.types.map(x => this.getSwaggerType(x)), ...(title && { title }) };
   }
 
-  protected getSwaggerTypeForEnumType(enumType: Tsoa.EnumType): Swagger.Schema3 {
+  protected getSwaggerTypeForEnumType(enumType: Tsoa.EnumType, title?: string): Swagger.Schema3 {
     const types = this.determineTypesUsedInEnum(enumType.enums);
 
     if (types.size === 1) {
       const type = types.values().next().value;
       const nullable = enumType.enums.includes(null) ? true : false;
-      return { type, enum: enumType.enums.map(member => getValue(type, member)), nullable };
+      return { ...(title && { title }), type, enum: enumType.enums.map(member => getValue(type, member)), nullable };
     } else {
       const valuesDelimited = Array.from(types).join(',');
       throw new Error(`Enums can only have string or number values, but enum had ${valuesDelimited}`);

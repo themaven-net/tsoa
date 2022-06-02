@@ -38,6 +38,9 @@ export class SpecGenerator2 extends SpecGenerator {
     if (this.config.description) {
       spec.info.description = this.config.description;
     }
+    if (this.config.termsOfService) {
+      spec.info.termsOfService = this.config.termsOfService;
+    }
     if (this.config.tags) {
       spec.tags = this.config.tags;
     }
@@ -205,7 +208,7 @@ export class SpecGenerator2 extends SpecGenerator {
         if ((res.exampleLabels?.filter(e => e).length || 0) > 0) {
           console.warn('Example labels are not supported in OpenAPI 2');
         }
-        swaggerResponses[res.name].examples = { [DEFAULT_RESPONSE_MEDIA_TYPE]: res.examples[0] } as Swagger.Example;
+        swaggerResponses[res.name].examples = { [DEFAULT_RESPONSE_MEDIA_TYPE]: res.examples[0] };
       }
 
       if (res.headers) {
